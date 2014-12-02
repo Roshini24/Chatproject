@@ -249,6 +249,7 @@ public class ChatWindow extends JFrame  implements Runnable{
     		objDataObject = new MessageObject();
 		objDataObject.setMessage(strMessage);
 		objDataObject.setStrUserName(strUserName);
+		objDataObject.setbActiveUser(true);
                sendMessage(objDataObject);
 	       jTextFieldChat.setText("");
     		}
@@ -273,12 +274,13 @@ public class ChatWindow extends JFrame  implements Runnable{
         		connect(strUserName);
         		strMessage = "**User "+strUserName+" joined ";
         		sb.append(strMessage + "\n" );
+        		jTextAreaChat.setForeground(Color.BLUE);
         		jTextAreaChat.setText( sb.toString());
         		objDataObject = new MessageObject();
 				objDataObject.setMessage(strMessage);
 				objDataObject.setStrUserName(strUserName);
 				objDataObject.setbActiveUser(true);
-               sendMessage(objDataObject);
+                sendMessage(objDataObject);
         		jButtonConnect.setEnabled(false);
         		strCurrentUser = strUserName; 
         	}else{
@@ -305,10 +307,7 @@ public class ChatWindow extends JFrame  implements Runnable{
     		objDataObject.setStrUserName(strUserName);
     		objDataObject.setbActiveUser(false);
             sendMessage(objDataObject);
-    		if(arrListUserNames.contains(strUserName))
-    		{
-    			arrListUserNames.remove(strUserName);
-    		}
+            maintainUserList(objDataObject);
     		disconnect();
     		jButtonConnect.setEnabled(true);
     		
@@ -351,14 +350,7 @@ public class ChatWindow extends JFrame  implements Runnable{
 					if(!objMessageObject.getStrUserName().equals(strCurrentUser)){
 						sb.append(strmessage + "\n" );
 			    		jTextAreaChat.setText( sb.toString());
-		        		if(!arrListUserNames.contains(objMessageObject.getStrUserName()))
-		        		{
-		        			arrListUserNames.add(objMessageObject.getStrUserName());
-		        			listModel.addElement(objMessageObject.getStrUserName());
-				     		jScrollPane2.setViewportView(jListUsers);
-		        		}
-		        		
-			    	
+			    		jTextAreaChat.setForeground(Color.BLACK);
 					}
 					maintainUserList(objMessageObject);
 				}
@@ -375,23 +367,24 @@ public class ChatWindow extends JFrame  implements Runnable{
 		}
 	}
     public void maintainUserList(Object obj){
-    	String strTemp = "";
+
     	MessageObject objMessageObject = (MessageObject) obj;
-    	if(!arrListUserNames.contains(objMessageObject.getStrUserName()))
-		{
-			arrListUserNames.add(objMessageObject.getStrUserName());
-			listModel.addElement(objMessageObject.getStrUserName());
-     		jScrollPane2.setViewportView(jListUsers);
-		}
-    	//if(!objMessageObject.isbActiveUser()){
-    	//	arrListUserNames.remove(objMessageObject.getStrUserName());
+    	boolean bUserExists =false; int iIdex=0;
     		for (int i =0 ;i <listModel.size(); i++){
-    			strTemp = listModel.getElementAt(i).toString();
+	    			if(listModel.getElementAt(i).toString().equals(objMessageObject.getStrUserName()) ){
+	    				bUserExists =true;
+	    				iIdex= i;
+	    				break;
+    			}
     		}
-    		//listModel.g
-    		////listModel.addElement(objMessageObject.getStrUserName());
-     		//jScrollPane2.setViewportView(jListUsers);
-    	//}
+    		if(!bUserExists && objMessageObject.isbActiveUser()){
+    			listModel.addElement(objMessageObject.getStrUserName());
+         		jScrollPane2.setViewportView(jListUsers);
+    		}
+    		if(bUserExists && !objMessageObject.isbActiveUser()){
+    			listModel.remove(iIdex);
+         		jScrollPane2.setViewportView(jListUsers);
+    		}
     
     }
 	public void setConnected(boolean c){
@@ -461,6 +454,7 @@ public class ChatWindow extends JFrame  implements Runnable{
         		objDataObject = new MessageObject();
 		objDataObject.setMessage(strMessage);
 		objDataObject.setStrUserName(strUserName);
+		objDataObject.setbActiveUser(true);
                sendMessage(objDataObject);
     	       jTextFieldChat.setText("");
         		}
