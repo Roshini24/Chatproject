@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import javax.swing.*;
 /**
@@ -16,6 +17,7 @@ public class ChatWindow extends JFrame  implements Runnable{
      * Creates new form NewJFrame
      */
     public StringBuffer sb = new StringBuffer();
+    public ArrayList<String> arrListUserNames =new ArrayList<String>();
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JButton jButtonClear;
     private JButton jButtonConnect;
@@ -259,6 +261,10 @@ public class ChatWindow extends JFrame  implements Runnable{
     	strUserName = jTextUserName.getText();
     		strUserName = jTextUserName.getText();
         	if(!strUserName.equals("")){
+        		if(!arrListUserNames.contains(strUserName))
+        		{
+        			arrListUserNames.add(strUserName);
+        		}
         		jButtonConnect.setEnabled(true);
         		jTextUserName.setEditable(false);
         		jListUsers = new JList(listModel);
@@ -269,8 +275,9 @@ public class ChatWindow extends JFrame  implements Runnable{
         		sb.append(strMessage + "\n" );
         		jTextAreaChat.setText( sb.toString());
         		objDataObject = new MessageObject();
-		objDataObject.setMessage(strMessage);
-		objDataObject.setStrUserName(strUserName);
+				objDataObject.setMessage(strMessage);
+				objDataObject.setStrUserName(strUserName);
+				objDataObject.setbActiveUser(true);
                sendMessage(objDataObject);
         		jButtonConnect.setEnabled(false);
         		strCurrentUser = strUserName; 
@@ -294,9 +301,14 @@ public class ChatWindow extends JFrame  implements Runnable{
     		setConnected(false);
     		jButtonRemoveActionPerformed(evt);
     		objDataObject = new MessageObject();
-		objDataObject.setMessage(strMessage);
-		objDataObject.setStrUserName(strUserName);
-               sendMessage(objDataObject);
+    		objDataObject.setMessage(strMessage);
+    		objDataObject.setStrUserName(strUserName);
+    		objDataObject.setbActiveUser(false);
+            sendMessage(objDataObject);
+    		if(arrListUserNames.contains(strUserName))
+    		{
+    			arrListUserNames.remove(strUserName);
+    		}
     		disconnect();
     		jButtonConnect.setEnabled(true);
     		
@@ -339,9 +351,16 @@ public class ChatWindow extends JFrame  implements Runnable{
 					if(!objMessageObject.getStrUserName().equals(strCurrentUser)){
 						sb.append(strmessage + "\n" );
 			    		jTextAreaChat.setText( sb.toString());
-			    		 listModel.addElement(objMessageObject.getStrUserName());
-			     		jScrollPane2.setViewportView(jListUsers);
+		        		if(!arrListUserNames.contains(objMessageObject.getStrUserName()))
+		        		{
+		        			arrListUserNames.add(objMessageObject.getStrUserName());
+		        			listModel.addElement(objMessageObject.getStrUserName());
+				     		jScrollPane2.setViewportView(jListUsers);
+		        		}
+		        		
+			    	
 					}
+					maintainUserList(objMessageObject);
 				}
 			}
 		
@@ -355,6 +374,26 @@ public class ChatWindow extends JFrame  implements Runnable{
 			}
 		}
 	}
+    public void maintainUserList(Object obj){
+    	String strTemp = "";
+    	MessageObject objMessageObject = (MessageObject) obj;
+    	if(!arrListUserNames.contains(objMessageObject.getStrUserName()))
+		{
+			arrListUserNames.add(objMessageObject.getStrUserName());
+			listModel.addElement(objMessageObject.getStrUserName());
+     		jScrollPane2.setViewportView(jListUsers);
+		}
+    	//if(!objMessageObject.isbActiveUser()){
+    	//	arrListUserNames.remove(objMessageObject.getStrUserName());
+    		for (int i =0 ;i <listModel.size(); i++){
+    			strTemp = listModel.getElementAt(i).toString();
+    		}
+    		//listModel.g
+    		////listModel.addElement(objMessageObject.getStrUserName());
+     		//jScrollPane2.setViewportView(jListUsers);
+    	//}
+    
+    }
 	public void setConnected(boolean c){
 		bIsConnected = c;
 	}

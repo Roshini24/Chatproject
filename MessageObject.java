@@ -17,7 +17,15 @@ public class MessageObject extends DataObject  implements Serializable {
 	}
 	private String strMessage;
 	private String strUserName;
-        int sX,sY,eX,eY;
+	private boolean bActiveUser;
+
+		public boolean isbActiveUser() {
+		return bActiveUser;
+	}
+	public void setbActiveUser(boolean bActiveUser) {
+		this.bActiveUser = bActiveUser;
+	}
+		int sX,sY,eX,eY;
         boolean bDraw;
 
     public int getsX() {
@@ -72,7 +80,8 @@ public class MessageObject extends DataObject  implements Serializable {
 	@Override
 	public String toString() {
 		return "MessageObject [strMessage=" + strMessage + ", strUserName="
-				+ strUserName + "]"+ ", bDraw="
+				+ strUserName +  ", bActiveUser="
+				+ bActiveUser + ", bDraw="
 				+ bDraw + "]";
 	}
 
