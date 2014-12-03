@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import javax.swing.text.*;
 
 import javax.swing.*;
 /**
@@ -16,6 +17,9 @@ public class ChatWindow extends JFrame  implements Runnable{
     /**
      * Creates new form NewJFrame
      */
+	//private String strServer ="localhost";
+	private String strServer ="10.98.219.182";
+	private int iPort = 2020;
     public StringBuffer sb = new StringBuffer();
     public ArrayList<String> arrListUserNames =new ArrayList<String>();
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -34,13 +38,19 @@ public class ChatWindow extends JFrame  implements Runnable{
     private JLabel jLabelUserName;
     private javax.swing.JLabel jLabelUserList;
     private DrawPanel drawPanel1;
+    private JTextPane jtextPane ;
     boolean bIsConnected ;
     public ChatClient objChatClient;
+    private MutableAttributeSet mAttrs;
+    private StyledDocument styleDoc ;
+    private SimpleAttributeSet keyWord;
     private Socket socket              = null;
     MessageObject objDataObject;
     ObjectInputStream objInputStream;
     ObjectOutputStream objOutputStream;
     DefaultListModel listModel;
+    public int[][] arrChatMsgCount = new int[100][4]; 
+    private int iColorCounter,iChatStart = 0;
     public String strCurrentUser = "";
     // End of variables declaration//GEN-END:variables
     public ChatWindow() {
@@ -74,18 +84,26 @@ public class ChatWindow extends JFrame  implements Runnable{
         drawPanel1 = new DrawPanel();
         jLabelUserList = new javax.swing.JLabel();
         jButtonConnect.setEnabled(false);
+        jtextPane = new JTextPane();
+        jtextPane.setEditable(false);
+        mAttrs = jtextPane.getInputAttributes();  
+        styleDoc = jtextPane.getStyledDocument();      
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Chat Window");
-
+        
+        SimpleAttributeSet keyWord = new SimpleAttributeSet();
+        StyleConstants.setForeground(keyWord, Color.RED);
+        StyleConstants.setBackground(keyWord, Color.YELLOW);
+        
         jTextFieldChat.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 jTextFieldChatKeyPressed(evt);
             }
         });
 
-        jTextAreaChat.setColumns(20);
-        jTextAreaChat.setRows(5);
-        jScrollPane1.setViewportView(jTextAreaChat);
+        //editorPane.setColumns(20);
+       // editorPane.setRows(5);
+        jScrollPane1.setViewportView(jtextPane);
 
         jButtonSend.setText("Send");
         jButtonSend.setActionCommand("btnSend");
@@ -245,20 +263,49 @@ public class ChatWindow extends JFrame  implements Runnable{
     		}
     		strMessage = strUserName+" :>" +jTextFieldChat.getText();
     		sb.append(strMessage + "\n" );
-    		jTextAreaChat.setText( sb.toString());
+    		setChatMsgLimits(0,sb);
+    		
+    		setChatMsgLimits(0,sb);
+    		 
+    		setChatArea(arrChatMsgCount);
     		objDataObject = new MessageObject();
-		objDataObject.setMessage(strMessage);
-		objDataObject.setStrUserName(strUserName);
-		objDataObject.setbActiveUser(true);
-               sendMessage(objDataObject);
-	       jTextFieldChat.setText("");
+			objDataObject.setMessage(strMessage);
+			objDataObject.setStrUserName(strUserName);
+			objDataObject.setbActiveUser(true);
+            sendMessage(objDataObject);
+	        jTextFieldChat.setText("");
     		}
     	}
     }//GEN-LAST:event_jButtonSendActionPerformed
-
+    public void setChatMsgLimits(int iSource,StringBuffer sbTemp){
+    
+    	arrChatMsgCount[iColorCounter][0] = iSource;
+		arrChatMsgCount[iColorCounter][1] = iChatStart;
+		arrChatMsgCount[iColorCounter][2] = sbTemp.length()-iChatStart;
+		arrChatMsgCount[iColorCounter][3] = sbTemp.length();
+		iChatStart = arrChatMsgCount[iColorCounter][1] + arrChatMsgCount[iColorCounter][2];
+		iColorCounter++;
+    }
+    public void setChatArea(int [][] arr){
+    	
+    	int iSource, istart,iEnd;
+		for(int i=0 ;i<iColorCounter; i++ ){
+				iSource = arr[i][0];
+				if(iSource ==0){
+				   StyleConstants.setForeground(mAttrs, Color.red); 
+			       styleDoc.setCharacterAttributes(arr[i][1], arr[i][3], mAttrs, false); 
+	        		
+				}else{
+					StyleConstants.setForeground(mAttrs, Color.green); 
+				     styleDoc.setCharacterAttributes(arr[i][1], arr[i][3], mAttrs, false); 
+				
+				}
+		}
+		jtextPane.setText( sb.toString());
+    }
     private void jButtonConnectActionPerformed(ActionEvent evt) {
     	String strUserName,strMessage = "";
-    	listModel.addElement("");
+    	//listModel.addElement("");
     	strUserName = jTextUserName.getText();
     		strUserName = jTextUserName.getText();
         	if(!strUserName.equals("")){
@@ -274,8 +321,9 @@ public class ChatWindow extends JFrame  implements Runnable{
         		connect(strUserName);
         		strMessage = "**User "+strUserName+" joined ";
         		sb.append(strMessage + "\n" );
-        		jTextAreaChat.setForeground(Color.BLUE);
-        		jTextAreaChat.setText( sb.toString());
+        		setChatMsgLimits(0,sb);
+ 
+        		setChatArea(arrChatMsgCount);
         		objDataObject = new MessageObject();
 				objDataObject.setMessage(strMessage);
 				objDataObject.setStrUserName(strUserName);
@@ -298,8 +346,9 @@ public class ChatWindow extends JFrame  implements Runnable{
     		strUserName = jTextUserName.getText();
     		strMessage = "**User "+strUserName+" left ";
     		sb.append(strMessage + "\n" );
-    		jTextAreaChat.setText( sb.toString());
-    		//sendMessage(strMessage,strUserName);
+    		setChatMsgLimits(0,sb);
+    		 
+    		setChatArea(arrChatMsgCount);
     		setConnected(false);
     		jButtonRemoveActionPerformed(evt);
     		objDataObject = new MessageObject();
@@ -329,9 +378,10 @@ public class ChatWindow extends JFrame  implements Runnable{
     }
     public void connect(String strUsername){
 		setConnected(true);
-		System.out.println("Connecting to server with port:" + "localhost, 2020 : User" + strUsername );
+		
+		System.out.println("Connecting to Server:" + strServer+", Port:"+ iPort +", User:" + strUsername );
 		try{
-			socket = new Socket("localhost", 2020);
+			socket = new Socket(strServer, iPort);
 			objOutputStream = new ObjectOutputStream(socket.getOutputStream());
 			
 			new Thread(this).start();
@@ -348,16 +398,19 @@ public class ChatWindow extends JFrame  implements Runnable{
 					String strmessage = objMessageObject.getMessage();
 					System.out.println("In client :strmessage-> " + objMessageObject);
 					if(!objMessageObject.getStrUserName().equals(strCurrentUser)){
+						
 						sb.append(strmessage + "\n" );
-			    		jTextAreaChat.setText( sb.toString());
-			    		jTextAreaChat.setForeground(Color.BLACK);
+						int ilength= (strmessage + "\n").toString().length();
+		        		setChatMsgLimits(0,sb);
+		        		 
+		        		setChatArea(arrChatMsgCount); 
 					}
 					maintainUserList(objMessageObject);
 				}
 			}
 		
 		}catch(Exception e){
-			System.out.println("Exception: method :run() " + e.getMessage());
+			System.out.println("Exception: " + e.getMessage());
 		}finally{
 			try{
 				objInputStream.close();
@@ -407,7 +460,7 @@ public class ChatWindow extends JFrame  implements Runnable{
 	
     private void jButtonClearActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButtonClearActionPerformed
         // TODO add your handling code here:
-        jTextAreaChat.setText( "");
+        jtextPane.setText( "");
         sb.delete(0, sb.length());
     }//GEN-LAST:event_jButtonClearActionPerformed
 
@@ -450,11 +503,14 @@ public class ChatWindow extends JFrame  implements Runnable{
         		}
         		strMessage = strUserName+" :>" +jTextFieldChat.getText();
         		sb.append(strMessage + "\n" );
-        		jTextAreaChat.setText( sb.toString());
+        		setChatMsgLimits(0,sb);
+        		 
+        		setChatArea(arrChatMsgCount);
+        		System.out.println("sb.toString()->"+sb.toString());
         		objDataObject = new MessageObject();
-		objDataObject.setMessage(strMessage);
-		objDataObject.setStrUserName(strUserName);
-		objDataObject.setbActiveUser(true);
+				objDataObject.setMessage(strMessage);
+				objDataObject.setStrUserName(strUserName);
+				objDataObject.setbActiveUser(true);
                sendMessage(objDataObject);
     	       jTextFieldChat.setText("");
         		}
