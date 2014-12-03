@@ -18,7 +18,14 @@ public class MessageObject extends DataObject  implements Serializable {
 	private String strMessage;
 	private String strUserName;
 	private boolean bActiveUser;
+	private StringBuffer sbChatHistory;
 
+		public StringBuffer getSbChatHistory() {
+		return sbChatHistory;
+	}
+	public void setSbChatHistory(StringBuffer sbChatHistory) {
+		this.sbChatHistory = sbChatHistory;
+	}
 		public boolean isbActiveUser() {
 		return bActiveUser;
 	}
