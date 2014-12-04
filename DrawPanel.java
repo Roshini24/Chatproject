@@ -4,6 +4,9 @@
  * and open the template in the editor.
  */
 import java.awt.Graphics;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
 import javax.swing.JFrame;
@@ -17,15 +20,24 @@ public class DrawPanel extends javax.swing.JPanel {
     /**
      * Creates new form DrawPanel
      */
-    ArrayList<DrawObject> linelist;
+	ArrayList<DrawObject> linelist;
 	int lastX, lastY;
-        ChatWindow objChatWindow;
-        DrawObject objDrawObject;
+	ChatWindow objChatWindow;
+	DrawObject objDrawObject;
+	private Socket socket = null;
+	private ObjectInputStream objInputStream;
+	private ObjectOutputStream objOutputStream;
     public DrawPanel() {
+
+    }
+	public DrawPanel(Socket s,ObjectInputStream objInputStream,ObjectOutputStream objOutputStream) {
         linelist = new ArrayList<DrawObject>();
         initComponents();
-    }
-public static void main(String[] args) {
+		this.socket = s;
+		this.objInputStream = objInputStream;
+		this.objOutputStream = objOutputStream;
+	}
+public static void main1(String[] args) {
     JFrame frame = new JFrame();
     frame.getContentPane().add(new DrawPanel());
 
@@ -73,7 +85,7 @@ public static void main(String[] args) {
             }
         });
 
-        jButtonSend.setText("Send");
+        jButtonSend.setText("SendDrawing");
         jButtonSend.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonSendActionPerformed(evt);
@@ -139,10 +151,11 @@ public static void main(String[] args) {
 
     private void jButtonSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSendActionPerformed
         // TODO add your handling code here:
-        objChatWindow = new ChatWindow();
-        Iterator<DrawObject> it = linelist.iterator();       
+        objChatWindow = new ChatWindow(socket,objInputStream,objOutputStream);
+        Iterator<DrawObject> it = linelist.iterator();  
         while(it.hasNext()){
-          objChatWindow.sendMessage(it);
+          objDrawObject= it.next();
+          objChatWindow.sendMessage(objDrawObject);
         }
 
     }//GEN-LAST:event_jButtonSendActionPerformed

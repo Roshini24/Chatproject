@@ -22,6 +22,7 @@ public class ChatWindow extends JFrame implements Runnable {
 	public ArrayList<String> arrListUserNames = new ArrayList<String>();
 	private JButton jButtonClear;
 	private JButton jButtonConnect;
+	private JButton jButtonChatHistory;
 	private JButton jButtonDisconnect;
 	private JButton jButtonRemove;
 	private JButton jButtonSend;
@@ -31,7 +32,9 @@ public class ChatWindow extends JFrame implements Runnable {
 	private JScrollPane jScrollPane2;
 	private JTextField jTextFieldChat;
 	private JTextField jTextUserName;
+	private JPasswordField jPasswordField;
 	private JLabel jLabelUserName;
+	private JLabel jLabelPassWord;
 	private javax.swing.JLabel jLabelUserList;
 	private DrawPanel drawPanel1;
 	private JTextPane jtextPane;
@@ -49,7 +52,11 @@ public class ChatWindow extends JFrame implements Runnable {
 	public ChatWindow() {
 		initComponents();
 	}
-
+	public ChatWindow(Socket s,ObjectInputStream objInputStream,ObjectOutputStream objOutputStream) {
+		this.socket = s;
+		this.objInputStream = objInputStream;
+		this.objOutputStream = objOutputStream;
+	}
 	@SuppressWarnings("unchecked")
 	private void initComponents() {
 
@@ -63,10 +70,12 @@ public class ChatWindow extends JFrame implements Runnable {
 		// jListUsers = new javax.swing.JList();
 		jButtonRemove = new javax.swing.JButton();
 		jButtonConnect = new javax.swing.JButton();
+		jButtonChatHistory = new javax.swing.JButton();
 		jButtonDisconnect = new javax.swing.JButton();
 		jTextUserName = new javax.swing.JTextField();
+		jPasswordField  = new javax.swing.JPasswordField();
 		jLabelUserName = new javax.swing.JLabel();
-		drawPanel1 = new DrawPanel();
+		jLabelPassWord = new javax.swing.JLabel();
 		jLabelUserList = new javax.swing.JLabel();
 		jButtonConnect.setEnabled(false);
 		jtextPane = new JTextPane();
@@ -74,7 +83,13 @@ public class ChatWindow extends JFrame implements Runnable {
 		styleDoc = jtextPane.getStyledDocument();
 		setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 		setTitle("Chat Window");
-
+		try {
+			socket = new Socket(strServer, iPort);
+			objOutputStream = new ObjectOutputStream(socket.getOutputStream());
+		} catch (Exception ex) {
+			ex.toString();
+		}
+		drawPanel1 = new DrawPanel(socket,objInputStream,objOutputStream);
 		sAttrSet = new SimpleAttributeSet();
 		StyleConstants.setForeground(sAttrSet, Color.BLUE);
 		StyleConstants.setBackground(sAttrSet, Color.YELLOW);
@@ -160,6 +175,14 @@ public class ChatWindow extends JFrame implements Runnable {
                 jButtonConnectActionPerformed(evt);
             }
         });
+        
+        jButtonChatHistory.setText("ChatHistory");
+        jButtonChatHistory.setToolTipText("");
+        jButtonChatHistory.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+            	jButtonChatHistoryActionPerformed(evt);
+            }
+        });
 
         jButtonDisconnect.setText("Disconnect");
         jButtonDisconnect.setActionCommand("jButtonDisconnect");
@@ -170,8 +193,9 @@ public class ChatWindow extends JFrame implements Runnable {
         });
 
         jLabelUserName.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-        jLabelUserName.setText("Enter User Name");
-
+        jLabelUserName.setText("User Name");
+        jLabelPassWord.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        jLabelPassWord.setText("Password");
         jLabelUserList.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         jLabelUserList.setText("UserList");
 
@@ -186,6 +210,8 @@ public class ChatWindow extends JFrame implements Runnable {
                         .addComponent(jButtonConnect)
                         .addGap(18, 18, 18)
                         .addComponent(jButtonDisconnect)
+                         .addGap(18, 18, 18)
+                        .addComponent(jButtonChatHistory)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
@@ -196,6 +222,11 @@ public class ChatWindow extends JFrame implements Runnable {
                 .addComponent(jLabelUserName)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jTextUserName, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+               // .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(19, 19, 19)
+                .addComponent(jLabelPassWord)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabelUserList)
                 .addGap(55, 55, 55))
@@ -207,14 +238,17 @@ public class ChatWindow extends JFrame implements Runnable {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jTextUserName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabelUserName))
+                        .addComponent(jLabelUserName)
+                        .addComponent(jPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabelPassWord))
                     .addComponent(jLabelUserList, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(17, 17, 17)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jButtonDisconnect)
-                    .addComponent(jButtonConnect)))
+                    .addComponent(jButtonConnect)
+                    .addComponent(jButtonChatHistory)))
         );
 
         pack();
@@ -378,17 +412,17 @@ public class ChatWindow extends JFrame implements Runnable {
 		System.out.println("Connecting to Server:" + strServer + ", Port:"
 				+ iPort + ", User:" + strUsername);
 		try {
-			socket = new Socket(strServer, iPort);
-			objOutputStream = new ObjectOutputStream(socket.getOutputStream());
-
 			new Thread(this).start();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
 	}
 	public void sendMessage(Object obj) {
 
 		try {
+			if(obj == null){
+				System.out.println("obj->" + obj);
+			}
 			objOutputStream.writeObject(obj);
 			System.out.println("obj->" + obj);
 		} catch (Exception ex) {
@@ -402,18 +436,21 @@ public class ChatWindow extends JFrame implements Runnable {
 		try {
 			objInputStream = new ObjectInputStream(socket.getInputStream());
 			while (true) {
-				MessageObject objMessageObject = (MessageObject) objInputStream
-						.readObject();
-				if (objMessageObject != null) {
-					String strmessage = objMessageObject.getMessage();
-					System.out.println("In client :strmessage-> "
-							+ objMessageObject);
-					if (!objMessageObject.getStrUserName().equals(
-							strCurrentUser)) {
-						sb.append(strmessage + "\n");
-						setChatArea(1, strmessage + "\n");
+				Object obj = objInputStream.readObject();
+				if(obj instanceof MessageObject){
+					MessageObject objMessageObject = (MessageObject) objInputStream
+							.readObject();
+					if (objMessageObject != null) {
+						String strmessage = objMessageObject.getMessage();
+						System.out.println("In client :strmessage-> "
+								+ objMessageObject);
+						if (!objMessageObject.getStrUserName().equals(
+								strCurrentUser)) {
+							sb.append(strmessage + "\n");
+							setChatArea(1, strmessage + "\n");
+						}
+						maintainUserList(objMessageObject);
 					}
-					maintainUserList(objMessageObject);
 				}
 			}
 
@@ -460,7 +497,9 @@ public class ChatWindow extends JFrame implements Runnable {
 		return bIsConnected;
 	}
 
-
+	private void jButtonChatHistoryActionPerformed(ActionEvent evt) {
+	
+	}
 
 	private void jButtonClearActionPerformed(ActionEvent evt) {
 		

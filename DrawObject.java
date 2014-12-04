@@ -1,3 +1,5 @@
+import java.io.Serializable;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -7,7 +9,7 @@
  *
  * @author rosh
  */
-public class DrawObject {
+public class DrawObject implements Serializable{
 
     public DrawObject(int startX, int startY, int endX, int endY) {
         this.sX = startX;
